@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# batchProcessing-0x02
+
+API_BASE_URL="https://pokeapi.co/api/v2/pokemon"
+OUTPUT_DIR="pokemon_data"
+
+mkdir -p "$OUTPUT_DIR"
+
+# List of Pokémon (as required, lowercased for API & filenames)
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+for pokemon in "${POKEMONS[@]}"; do
+    echo "Fetching data for ${pokemon}..."
+
+    output_file="${OUTPUT_DIR}/${pokemon}.json"
+
+    # -s silent, -S show errors, -f fail on HTTP error
+    if curl -sSf "${API_BASE_URL}/${pokemon}" -o "${output_file}"; then
+        echo "Saved data to ${output_file} ✅"
+    else
+        echo "Failed to fetch data for ${pokemon}" >&2
+        [ -f "${output_file}" ] && rm -f "${output_file}"
+    fi
+
+    sleep 2
+done
