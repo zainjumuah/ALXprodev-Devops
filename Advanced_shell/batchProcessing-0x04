@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# batchProcessing-0x04
+
+API_BASE_URL="https://pokeapi.co/api/v2/pokemon"
+OUTPUT_DIR="pokemon_data"
+ERROR_LOG="errors_parallel.txt"
+
+mkdir -p "$OUTPUT_DIR"
+: > "$ERROR_LOG"
+
+POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+
+fetch_pokemon() {
+    local poke="$1"
+    local slug
+    slug=$(echo "$poke" | tr '[:upper:]' '[:lower:]')
+    local output_file="${OUTPUT_DIR}/${slug}.json"
+
+    echo "[PID $$] Fetching data for ${slug}..."
+
+    if curl -sSf "${API_BASE_URL}/${slug}" -o "${output_file}"; then
+        echo "[PID $$] Saved data to ${output_file}"
+    else
+        echo "[PID $$] Failed to fetch data for ${slug}"
+        printf '%s - %s (PID %s)\n' "$(date '+%Y-%m-%d %H:%M:%S')" "Failed to fetch ${slug}" "$$" >> "$ERROR_LOG"
+    fi
+}
+
+# launch all fetches in the background
+for poke in "${POKEMON_LIST[@]}"; do
+    fetch_pokemon "$poke" &
+done
+
+echo "All fetch jobs started in the background. Waiting for them to finish"
+
+# wait for all background jobs to complete
+wait
+
+echo "All Pokémon data fetches completed"
