@@ -1,0 +1,19 @@
+#!/bin/bash
+
+jq -r '
+  .name,
+  .types[0].type.name,
+  (.weight / 10),
+  (.height / 10)
+' data.json \
+| awk 'NR==1 {name=$0}
+       NR==2 {type=$0}
+       NR==3 {weight=$0}
+       NR==4 {height=$0}
+       END {
+         printf "%s is of type %s, weighs %skg, and is %sm tall.\n",
+         toupper(substr(name,1,1)) substr(name,2),
+         toupper(substr(type,1,1)) substr(type,2),
+         weight,
+         height
+       }'
