@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# batchProcessing-0x03
+
+API_BASE_URL="https://pokeapi.co/api/v2/pokemon"
+OUTPUT_DIR="pokemon_data"
+ERROR_LOG="errors.txt"
+MAX_RETRIES=3
+DELAY=2
+
+mkdir -p "$OUTPUT_DIR"
+> "$ERROR_LOG"   # fresh error log each run
+
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+for pokemon in "${POKEMONS[@]}"; do
+    echo "Fetching data for ${pokemon}..."
+
+    output_file="${OUTPUT_DIR}/${pokemon}.json"
+    attempt=1
+    success=false
+
+    while [ "$attempt" -le "$MAX_RETRIES" ]; do
+        if curl -sSf "${API_BASE_URL}/${pokemon}" -o "$output_file"; then
+            echo "Saved data to ${output_file} ✅"
+            success=true
+            break
+        else
+            echo "Attempt ${attempt} failed for ${pokemon}..."
+            attempt=$((attempt + 1))
+            sleep "$DELAY"
+        fi
+    done
+
+    if [ "$success" = false ]; then
+        echo "[$(date)] Failed to fetch data for ${pokemon} after ${MAX_RETRIES} attempts." >> "$ERROR_LOG"
+        echo "Skipping ${pokemon} ❌"
+        [ -f "$output_file" ] && rm -f "$output_file"
+    fi
+
+    sleep "$DELAY"
+done
